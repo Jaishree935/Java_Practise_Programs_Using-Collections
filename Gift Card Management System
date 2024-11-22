@@ -1,0 +1,249 @@
+You are tasked with developing a Product GiftCard management system. The system should be 
+implemented in Java and should incorporate various object-oriented programming constructs and 
+principles.   
+Create class Account with required data members in necessary access specifiers. 
+a. Create function Encryption for securing the password and function deposit, withdraw with 
+necessary access specifiers.  
+b. Create sub class Gift Card with data members id, credits and  respective methods of   
+a. Create()  -  card creation    
+b. TopUp()  - 10% of product price is the credits added for each purchase 
+c. Transaction_History() – Stores past 5 purchase amount in the file and displays it. 
+Complete Code:
+
+import java.io.*; 
+import java.util.*; 
+class Account { 
+      private String accountHolder; 
+      private String password; 
+      private double balance; 
+      public Account(String accountHolder, String password, double balance) { 
+           this.accountHolder = accountHolder; 
+           this.password = encryptPassword(password); 
+           this.balance = balance; 
+       } 
+       // Encrypt the password 
+      private String encryptPassword(String password) { 
+              return new StringBuilder(password).reverse().toString(); 
+      } 
+      // Deposit 
+      public void deposit(double amount) { 
+              balance += amount; 
+              System.out.println("Deposited: $" + amount);  
+      } 
+       // Withdraw 
+      public void withdraw(double amount) { 
+            if (balance >= amount) { 
+                balance -= amount; 
+                System.out.println("Withdrawn: $" + amount); 
+            }
+            else { 
+               System.out.println("Insufficient balance."); 
+            } 
+      } 
+      public double getBalance() { 
+             return balance; 
+       } 
+     public String getAccountHolder() { 
+            return accountHolder; 
+     } 
+} 
+
+class GiftCard extends Account { 
+      private int id; 
+      private double credits; 
+      public GiftCard(String accountHolder, String password, double balance, int id) { 
+              super(accountHolder, password, balance); 
+              this.id = id; 
+              this.credits = 0; 
+      } 
+      public int getId() { 
+             return id; 
+      } 
+      public void create() { 
+             System.out.println("GiftCard created for account holder: " + getAccountHolder() + ", ID: " + id); 
+      } 
+      // Method to top up 
+      public void topUp(double productPrice) throws IOException { 
+              double topUpAmount = productPrice * 0.10; 
+              credits += topUpAmount; 
+              System.out.println("GiftCard topped up by: $" + topUpAmount + " (10% of product price)"); 
+              saveTransaction(topUpAmount); 
+       } 
+      // Automatically save each transaction to the file 
+     public void saveTransaction(double amount) throws IOException { 
+            File file = new File("TransactionHistory.txt"); 
+            BufferedWriter writer = new BufferedWriter(new FileWriter(file, true)); // Append mode 
+            writer.write("ID-" + id + " Transaction: $" + amount + "\n"); 
+            writer.close(); 
+            System.out.println("Transaction of $" + amount + " for GiftCard ID-" + id); 
+      } 
+     public void subCredits(int points) { 
+         credits -= points; 
+      } 
+      public double getCredits() { 
+             return credits; 
+       } 
+} 
+
+class RedeemPoints extends GiftCard { 
+         public RedeemPoints(String accountHolder, String password, double balance, int id) { 
+               super(accountHolder, password, balance, id); 
+          } 
+          // Redeem by purchase 
+         public void redeem(float amount) throws IOException { 
+              if (getBalance() >= amount) { 
+                    withdraw(amount); 
+                    System.out.println("Purchase redeemed with amount: $" + amount); 
+                    saveTransaction(amount);  // Save the transaction immediately 
+             }
+             else { 
+                    System.out.println("Insufficient balance to redeem by purchase."); 
+             } 
+         } 
+ 
+        // Redeem by points 
+          public void redeem(int points) throws IOException { 
+                if (getCredits() >= points) { 
+                        System.out.println("Redeemed with points: " + points); 
+                        subCredits(points); 
+                        saveTransaction(points);  // Save the transaction immediately 
+                }
+              else { 
+                     System.out.println("Insufficient points to redeem."); 
+                   } 
+        } 
+} 
+ 
+public class GiftCardManagementSystem { 
+          public static void main(String[] args) throws IOException { 
+                 Scanner scanner = new Scanner(System.in); 
+                 GiftCard[] giftCards = new GiftCard[10]; // Array to store up to 10 gift cards 
+                 int cardCount = 0; 
+               while (true) { 
+                     System.out.println("\n--- GiftCard Management System ---"); 
+                     System.out.println("1. Create GiftCard"); 
+                     System.out.println("2. TopUp GiftCard"); 
+                     System.out.println("3. Redeem by Purchase"); 
+                     System.out.println("4. Redeem by Points"); 
+                     System.out.println("5. View Balance"); 
+                     System.out.println("6. Deposit into Balance"); 
+                     System.out.println("7. View Credits"); 
+                     System.out.println("8. Exit"); 
+                     System.out.print("Choose an option: "); 
+                     int choice = scanner.nextInt(); 
+                     switch (choice) { 
+                         case 1: 
+                             if (cardCount < giftCards.length) { 
+                                  System.out.print("\nEnter Account Holder Name: "); 
+                                  String accountHolder = scanner.next(); 
+                                  System.out.print("Enter Password: "); 
+                                  String password = scanner.next(); 
+                                  System.out.print("Enter Initial Balance: "); 
+                                  double balance = scanner.nextDouble(); 
+                                  System.out.print("Enter GiftCard ID: "); 
+                                  int id = scanner.nextInt();  
+                                  // Check for unique ID 
+                                  boolean idExists = false; 
+                                  for (int i = 0; i < cardCount; i++) { 
+                                       if (giftCards[i] != null && giftCards[i].getId() == id) { 
+                                             idExists = true; 
+                                             break; 
+                                       } 
+                                 }   
+                                if (idExists) { 
+                                     System.out.println("ID already exists. Please use a different ID."); 
+                                }
+                                else { 
+                                    giftCards[cardCount] = new RedeemPoints(accountHolder, password, balance, id); 
+                                    giftCards[cardCount].create(); 
+                                    cardCount++; 
+                                 } 
+                                }
+                                else { 
+                                    System.out.println("Cannot create more cards. Maximum limit reached."); 
+                                } 
+                                  break; 
+                      case 2: 
+                            System.out.print("\nEnter the GiftCard ID to top up: "); 
+                            int topUpId = scanner.nextInt(); 
+                            RedeemPoints topUpCard = findRedeemPointsById(giftCards, topUpId, cardCount); 
+                            if (topUpCard != null) { 
+                               System.out.print("Enter Product Price: "); 
+                               double productPrice = scanner.nextDouble(); 
+                               topUpCard.topUp(productPrice); 
+                            } 
+                           break; 
+                    case 3: 
+                           System.out.print("\nEnter the GiftCard ID to redeem by purchase: "); 
+                           int redeemPurchaseId = scanner.nextInt(); 
+                           RedeemPoints redeemPurchaseCard = findRedeemPointsById(giftCards, redeemPurchaseId, 
+                           cardCount); 
+                           if (redeemPurchaseCard != null) { 
+                                  System.out.print("Enter the amount to redeem: "); 
+                                  float amount = scanner.nextFloat(); 
+                                  redeemPurchaseCard.redeem(amount); 
+                           } 
+                          break; 
+                    case 4: 
+                            System.out.print("\nEnter the GiftCard ID to redeem by points: "); 
+                            int redeemPointsId = scanner.nextInt(); 
+                             RedeemPoints redeemPointsCard = findRedeemPointsById(giftCards, redeemPointsId, cardCount); 
+                            if (redeemPointsCard != null) { 
+                                  System.out.print("Enter the points to redeem: "); 
+                                  int points = scanner.nextInt(); 
+                                  redeemPointsCard.redeem(points); 
+                            } 
+                            break; 
+ 
+                   case 5: 
+                         System.out.print("\nEnter the GiftCard ID to view balance: "); 
+                         int balanceId = scanner.nextInt(); 
+                         RedeemPoints balanceCard = findRedeemPointsById(giftCards, balanceId, cardCount); 
+                          if (balanceCard != null) { 
+                                System.out.println("Balance: $" + balanceCard.getBalance()); 
+                          } 
+                         break; 
+                   case 6: 
+                         System.out.print("\nEnter the GiftCard ID to deposit into balance: "); 
+                         int depositId = scanner.nextInt(); 
+                         RedeemPoints depositCard = findRedeemPointsById(giftCards, depositId, cardCount); 
+                         if (depositCard != null) { 
+                              System.out.print("Enter Deposit Amount: "); 
+                              double depositAmount = scanner.nextDouble(); 
+                              depositCard.deposit(depositAmount); 
+                          } 
+                         break;  
+                  case 7: 
+                          System.out.print("\nEnter the GiftCard ID to view credits: "); 
+                          int creditsId = scanner.nextInt(); 
+                          RedeemPoints creditsCard = findRedeemPointsById(giftCards, creditsId, cardCount); 
+                          if (creditsCard != null) { 
+                              System.out.println("Credits: " + creditsCard.getCredits()); 
+                          } 
+                          break;  
+                   case 8: 
+                          System.out.println("Exiting... Thank you for using the GiftCard Management System."); 
+                          scanner.close(); 
+                          return; 
+                    default: 
+                         System.out.println("Invalid option. Please try again."); 
+                   }
+               }
+          } 
+ 
+// Method to find a RedeemPoints card by ID 
+private static RedeemPoints findRedeemPointsById(GiftCard[] giftCards, int id, int cardCount) { 
+           for (int i = 0; i < cardCount; i++) { 
+                 if (giftCards[i] != null && giftCards[i] instanceof RedeemPoints) { 
+                        RedeemPoints card = (RedeemPoints) giftCards[i]; 
+                        if (card.getId() == id) { 
+                             return card; 
+                        }
+                  }
+             } 
+             System.out.println("GiftCard with ID " + id + " not found."); 
+           return null; 
+}
+}
+
+
